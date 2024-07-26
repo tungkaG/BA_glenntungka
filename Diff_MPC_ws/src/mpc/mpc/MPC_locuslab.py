@@ -711,7 +711,7 @@ def main(args=None):
 
     def signal_handler(sig, frame):
         node.get_logger().info("Ctrl-C caught, shutting down.")
-        node.cleanup()
+        # node.cleanup()
         node.destroy_node()
         rclpy.shutdown()
 

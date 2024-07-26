@@ -1,0 +1,7 @@
+pypose/
+sa_jonathanmohr/
+papers/
+**/__pycache__/
+**/build/
+**/install/
+**/log/
