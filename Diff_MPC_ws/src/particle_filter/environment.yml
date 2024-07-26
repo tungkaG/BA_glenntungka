@@ -1,0 +1,4 @@
+# name: pf_lmpc_env
+# channels:
+#   - defaults
+# prefix: /home/glenn/anaconda3/envs/pf_lmpc_env

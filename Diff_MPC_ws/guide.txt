@@ -1,0 +1,28 @@
+HOW TO RUN:
+- go to sim_ws and see INSTRUCTIONS.txt, u should be able to open novnc and see a car in a mpc_launch
+- run particle filter first: ros2 launch particle_filter localize_launch.py
+- run diff_mpc: ros2 launch mpc diff_mpc.launch
+
+IF CAR STARTS GOING IN A WILD DIRECTION:
+- make sure that the first trajectory index points to a point relatively close to origin
+
+---------------------------------------------------------------------------------
+For adding a new launch file consider:
+launch files has to end with _launch.py
+consider changing setup.py
+colcon build
+
+For changing environment, go to setup.cfg
+- learning_mpc_env for diff_mpc_launch
+- Johannes_MPC_env for mpc_launch and stanley_launch
+
+for installing range_libc in particle filter do:
+sudo pip3 install cython transforms3d
+git clone https://github.com/f1tenth/range_libc.git
+cd range_libc
+mkdir build
+cd build
+cmake ..
+make
+cd ~/range_libc/pywrapper
+sudo -E WITH_CUDA=ON /path/to/miniconda3/envs/myenv/bin/python setup.py install
