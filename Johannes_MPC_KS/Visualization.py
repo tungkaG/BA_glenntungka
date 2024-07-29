@@ -50,7 +50,7 @@ class Datalogger:
 
 
 # Load the pickle file data
-current_path = os.getcwd()
+current_path = os.path.dirname(os.path.abspath(__file__))
 # Load the correct filename
 # PurePursuit,Stanley, LQR, MPC
 filename = current_path + '/datalogging_MPC_KS.p'

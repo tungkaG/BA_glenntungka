@@ -655,7 +655,8 @@ if __name__ == '__main__':
             wpts = np.vstack((planner.waypoints[:, conf.wpt_xind], planner.waypoints[:, conf.wpt_yind])).T
             vehicle_state = np.array([obs['poses_x'][0], obs['poses_y'][0]])
             nearest_point, nearest_dist, t, i = nearest_point_on_trajectory(vehicle_state, wpts)
-            logging.logging2(nearest_point[0], nearest_point[1], path[2][i])
+            # logging.logging2(nearest_point[0], nearest_point[1], path[2][i])
+            logging.logging2(nearest_point[0], nearest_point[1], planner.waypoints[:, 3][i])
 
         # Update Asynchronous Counter for the MPC loop
         control_count = control_count + 1
