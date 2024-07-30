@@ -21,32 +21,28 @@ class Datalogger:
         self.vehicle_position_y = []        # Current vehicle position Y (rear axle) on the map
         self.vehicle_position_heading = []  # Current vehicle heading on the map
         self.vehicle_velocity_x = []        # Current vehicle velocity - Longitudinal
-        self.vehicle_velocity_y = []        # Current vehicle velocity - Lateral
         self.control_velocity = []          # Desired vehicle velocity based on control calculation
         self.steering_angle = []            # Steering angle based on control calculation
-        self.lapcounter = []                # Current Lap
         self.control_raceline_x = []        # Current Control Path X-Position on Raceline
         self.control_raceline_y = []        # Current Control Path y-Position on Raceline
         self.control_raceline_heading = []  # Current Control Path Heading on Raceline
         self.yawrate = []                   # Current State of the yawrate in rad\s
-        self.sideslip_angle = []            # Current Sideslipangle in rad
 
-    def logging(self, pose_x, pose_y, pose_theta, current_velocity_x, current_velocity_y, lap, control_veloctiy, control_steering, yawrate, sideslip_angle):
+    def logging(self, pose_x, pose_y, pose_theta, current_velocity_x, yawrate):
         self.vehicle_position_x.append(pose_x)
         self.vehicle_position_y.append(pose_y)
         self.vehicle_position_heading.append(pose_theta)
         self.vehicle_velocity_x .append(current_velocity_x)
-        self.vehicle_velocity_y.append(current_velocity_y)
-        self.control_velocity.append(control_veloctiy)
-        self.steering_angle.append(control_steering)
-        self.lapcounter.append(lap)
         self.yawrate.append(yawrate)
-        self.sideslip_angle.append(sideslip_angle)
 
     def logging2(self, raceline_x, raceline_y, raceline_theta):
         self.control_raceline_x.append(raceline_x)
         self.control_raceline_y.append(raceline_y)
         self.control_raceline_heading.append(raceline_theta)
+
+    def logging3(self, control_veloctiy, control_steering):
+        self.control_velocity.append(control_veloctiy)
+        self.steering_angle.append(control_steering)
 
 
 # Load the pickle file data
@@ -62,7 +58,9 @@ raceline_x = data.waypoints[:,[1]]
 raceline_y = data.waypoints[:,[2]]
 raceline_heading = data.waypoints[:,[3]]
 
-
+# print("data.vehicle_position_x shape: ", np.shape(data.vehicle_position_x))
+# print("data.control_raceline_x shape: ", np.shape(data.control_raceline_x))
+# print("data.control_velocity shape: ", np.shape(data.control_velocity))
 
 ########### Calculate additional vehicle parameters
 
@@ -109,18 +107,18 @@ lat_accel=(vel_arr*vel_arr)*curv_arr
 lat_accel2=(vel_arr*vel_arr)*curv_arr2
 
 
-#################### Tyre slip Angle
+# #################### Tyre slip Angle
 
-lf=0.15875
-lr=0.17145
-C_Sf= 4.718
-C_Sr= 5.4562
+# lf=0.15875
+# lr=0.17145
+# C_Sf= 4.718
+# C_Sr= 5.4562
 
-alpha_f = np.arctan((np.sin(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x) + np.array(data.yawrate) *lf)/ (np.cos(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x))) -np.array(data.steering_angle)
-alpha_r = np.arctan((np.sin(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x) - np.array(data.yawrate) *lr)/ (np.cos(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x)))
+# alpha_f = np.arctan((np.sin(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x) + np.array(data.yawrate) *lf)/ (np.cos(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x))) -np.array(data.steering_angle)
+# alpha_r = np.arctan((np.sin(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x) - np.array(data.yawrate) *lr)/ (np.cos(np.array(data.sideslip_angle))* np.array(data.vehicle_velocity_x)))
 
-Fy_f = C_Sf * alpha_f
-Fy_r = C_Sr * alpha_r
+# Fy_f = C_Sf * alpha_f
+# Fy_r = C_Sr * alpha_r
 
 
 ###############################################################################################################
@@ -262,40 +260,40 @@ axs2[2,1].legend()
 plt.show()
 ###########################################    WHOLE TRACK      ############################################
 
-fig3, axs3 = plt.subplots(2,2)
+# fig3, axs3 = plt.subplots(2,2)
 
-#  Lateral Tire Forces
-axs3[0,0].plot(np.rad2deg(alpha_f),Fy_f, linestyle ='solid',linewidth=2,color = '#005293', label = 'Front Axle/Front Wheels')
-axs3[0,0].plot(np.rad2deg(alpha_r),Fy_r, linestyle ='solid',linewidth=2,color = '#e37222', label = 'Rear Axle/Rear Wheels')
-axs3[0,0].set_title('Lateral Tyre Forces')
-axs3[0,0].set(ylabel='Lateral Force in N')
-axs3[0,0].set(xlabel='Tyre slip angle in degree')
-axs3[0,0].grid(axis="both")
-axs3[0,0].legend()
+# #  Lateral Tire Forces
+# axs3[0,0].plot(np.rad2deg(alpha_f),Fy_f, linestyle ='solid',linewidth=2,color = '#005293', label = 'Front Axle/Front Wheels')
+# axs3[0,0].plot(np.rad2deg(alpha_r),Fy_r, linestyle ='solid',linewidth=2,color = '#e37222', label = 'Rear Axle/Rear Wheels')
+# axs3[0,0].set_title('Lateral Tyre Forces')
+# axs3[0,0].set(ylabel='Lateral Force in N')
+# axs3[0,0].set(xlabel='Tyre slip angle in degree')
+# axs3[0,0].grid(axis="both")
+# axs3[0,0].legend()
 
-axs3[1,0].plot(Fy_f, linestyle ='solid',linewidth=2,color = '#005293', label = 'Front Axle/Front Wheels')
-axs3[1,0].plot(Fy_r, linestyle ='solid',linewidth=2,color = '#e37222', label = 'Rear Axle/Rear Wheels')
-axs3[1,0].set_title('Lateral Tyre Forces')
-axs3[1,0].set(ylabel='Lateral Force in N')
-axs3[1,0].grid(axis="both")
-axs3[1,0].legend()
+# axs3[1,0].plot(Fy_f, linestyle ='solid',linewidth=2,color = '#005293', label = 'Front Axle/Front Wheels')
+# axs3[1,0].plot(Fy_r, linestyle ='solid',linewidth=2,color = '#e37222', label = 'Rear Axle/Rear Wheels')
+# axs3[1,0].set_title('Lateral Tyre Forces')
+# axs3[1,0].set(ylabel='Lateral Force in N')
+# axs3[1,0].grid(axis="both")
+# axs3[1,0].legend()
 
-axs3[0,1].plot(np.rad2deg(data.sideslip_angle), linestyle ='solid',linewidth=2,color = '#005293', label = 'Sideslip Angle')
-#axs[2,1].set_ylim([min(data.sideslip_angle), max(data.sideslip_angle)])
-axs3[0,1].set_title('Sideslip angle')
-axs3[0,1].set(ylabel='Sideslip in Degree')
-axs3[0,1].grid(axis="both")
-axs3[0,1].legend()
+# axs3[0,1].plot(np.rad2deg(data.sideslip_angle), linestyle ='solid',linewidth=2,color = '#005293', label = 'Sideslip Angle')
+# #axs[2,1].set_ylim([min(data.sideslip_angle), max(data.sideslip_angle)])
+# axs3[0,1].set_title('Sideslip angle')
+# axs3[0,1].set(ylabel='Sideslip in Degree')
+# axs3[0,1].grid(axis="both")
+# axs3[0,1].legend()
 
-axs3[1,1].plot(lat_accel,np.rad2deg(data.steering_angle), linestyle ='solid',linewidth=2,color = '#005293', label = 'Steering Angle')
-axs3[1,1].plot(lat_accel,np.rad2deg(data.sideslip_angle), linestyle ='solid',linewidth=2,color = '#e37222', label = 'Sideslip angle')
-axs3[1,1].set_title('Under/ Oversteer')
-axs3[1,1].set(ylabel='Angle in Degree')
-axs3[1,1].set(xlabel='Lateral Acceleration in m/s2')
-axs3[1,1].grid(axis="both")
-axs3[1,1].legend()
+# axs3[1,1].plot(lat_accel,np.rad2deg(data.steering_angle), linestyle ='solid',linewidth=2,color = '#005293', label = 'Steering Angle')
+# axs3[1,1].plot(lat_accel,np.rad2deg(data.sideslip_angle), linestyle ='solid',linewidth=2,color = '#e37222', label = 'Sideslip angle')
+# axs3[1,1].set_title('Under/ Oversteer')
+# axs3[1,1].set(ylabel='Angle in Degree')
+# axs3[1,1].set(xlabel='Lateral Acceleration in m/s2')
+# axs3[1,1].grid(axis="both")
+# axs3[1,1].legend()
 
-plt.show()
+# plt.show()
 
 ##################################       Additional Plots       #################################
 

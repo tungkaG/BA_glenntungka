@@ -1,0 +1,11 @@
+# 1. record the rosbag
+ros2 bag record /pf/pose/odom /drive /ego_racecar/odom
+
+# 2. run listener (just click play)
+
+# 3. run rosbag
+ros2 bag play rosbag.db3
+
+# 4. run Visualization.py
+
+IF listener has already been run, it saves a pickle file, so we just have to run Visualization.oy without recording or playing any rosbags

@@ -626,6 +626,9 @@ class MPC_Node(Node):
             self.obs_linear_vel_y = 0.0
             self.obs_yawrate = 0.0
 
+            self.obs_max_speed = 0.0
+            self.max_steering = 0.0
+
             self.speed = 0.0
             self.steer = 0.0
 
@@ -657,6 +660,9 @@ class MPC_Node(Node):
             self.obs_pose_theta = zero_2_2pi(euler[2])
             self.obs_linear_vel_x = msg.twist.twist.linear.x
             self.obs_yawrate = msg.twist.twist.angular.z
+
+            if self.obs_linear_vel_x > self.obs_max_speed:
+                self.obs_max_speed = self.obs_linear_vel_x
             
             if self.conf_dict['logging'] == 'True':
                 self.logger.logging(self.obs_pose_x, self.obs_pose_y, self.obs_pose_theta, self.obs_linear_vel_x,
@@ -676,7 +682,10 @@ class MPC_Node(Node):
         def publish_control(self):
             # global DEBUG_PUBLISHER
             self.speed, self.steer = self.planner.control(self.obs_pose_x, self.obs_pose_y, self.obs_pose_theta, self.obs_linear_vel_x, self.path)
-                
+            
+            if self.steer > self.max_steering:
+                self.max_steering = self.steer
+
             # Prepare the drive message with the steering angle and corresponding speed
             drive_msg = AckermannDriveStamped()
             drive_msg.header.stamp = self.get_clock().now().to_msg()
@@ -692,6 +701,8 @@ class MPC_Node(Node):
             # self.get_logger().info('Control: speed=%f, steer=%f' % (self.speed, self.steer))
         
         def cleanup(self):
+            print("Max speed: ", self.obs_max_speed)
+            print("Max steering: ", self.max_steering*180/math.pi)
             # Save the logged data to a file
             if self.conf_dict['logging'] == 'True':
                 with open('src/mpc/mpc/mpc_locuslab.p', 'wb') as f:
@@ -711,7 +722,7 @@ def main(args=None):
 
     def signal_handler(sig, frame):
         node.get_logger().info("Ctrl-C caught, shutting down.")
-        # node.cleanup()
+        node.cleanup()
         node.destroy_node()
         rclpy.shutdown()
 

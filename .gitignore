@@ -5,3 +5,5 @@ papers/
 **/build/
 **/install/
 **/log/
+**/*.p
+**/bags/
