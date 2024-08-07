@@ -1,0 +1,175 @@
+# # Environemnt parameters
+# map_yaml_filename: 'config_FTM_Halle.yaml'
+# odom_topic: '/pf/pose/odom'
+
+# # MPC prediction paramter
+# t: 10
+# n_batch: 1
+# lqr_iter: 8
+# verbose_mpc: false
+# goal_weight_x: 13.5
+# goal_weight_y: 13.5
+# goal_weight_v: 5.5
+# goal_weight_theta: 13.0
+# ctrl_penalty_a: 0.01
+# ctrl_penalty_steer: 100
+
+# n_ind_search: 5
+# dt: 0.10
+# dl: 0.2
+# varying_dl: false
+# dl_factor_num: 0.05
+# dl_factor_denom: 3.5
+# max_dist: 50.0
+# control_frequency: 10
+
+# # Vehicle parameters
+# wheelbase: 0.3302
+# max_steer: 24.0 # degrees
+# max_speed: 2.9
+# min_speed: 0
+# max_accel: 2.5
+# speed_factor: 1
+
+#############################################################################################################
+
+# Environemnt parameters
+map_yaml_filename: 'config_FTM_Halle.yaml'
+odom_topic: '/ego_racecar/odom'
+
+# MPC prediction paramter
+t: 10
+n_batch: 1
+lqr_iter: 5
+verbose_mpc: false
+goal_weight_x: 13.5
+goal_weight_y: 13.5
+goal_weight_v: 5.5
+goal_weight_theta: 20.0
+ctrl_penalty_a: 0.01
+ctrl_penalty_steer: 100
+
+n_ind_search: 5
+dt: 0.10
+dl: 0.2
+varying_dl: true
+dl_factor_num: 0.08
+dl_factor_denom: 2.5
+max_dist: 1000.0
+control_frequency: 10
+
+# Vehicle parameters
+wheelbase: 0.3302
+max_steer: 24.0 # degrees
+max_speed: 3.5
+min_speed: 0
+max_accel: 3.0
+speed_factor: 1
+
+#############################################################################################################
+
+# if ODOM_TOPIC == '/pf/pose/odom':
+#     # System config
+#     NX = 4          # state vector: z = [x, y, v, yaw]
+#     NU = 2          # input vector: u = [accel, steer]
+#     T = 10           # finite time horizon length
+#     N_BATCH = 1
+#     LQR_ITER = 5
+#     VERBOSE_MPC = False
+
+#     # define P during runtime
+#     GOAL_WEIGHTS = torch.tensor((26.5, 26.5, 5.5, 26.0), dtype=torch.float32)  # nx
+#     CTRL_PENALTY = torch.tensor((0.01, 100), dtype=torch.float32) # nu
+#     q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
+#     Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
+
+
+#     # Vehicle parameters
+#     WB = 0.3302                           # Wheelbase [m]
+#     MAX_STEER = np.deg2rad(24.0)        # maximum steering angle [rad]
+#     MAX_SPEED = 2.9                    # maximum speed [m/s]
+#     MIN_SPEED = 0                       # minimum backward speed [m/s]
+#     MAX_ACCEL = 2.5                     # maximum acceleration [m/s]
+#     SPEED_FACTOR = 1                 # published speed = SPEED_FACTOR * speed
+
+#     # MPC prediction paramter
+#     N_IND_SEARCH = 5                        # Search index number
+#     DT = 0.10                               # time step [s]
+#     dl = 0.25                               # dist step [m]
+#     VARYING_DL = False                       # varying distance step size
+#     DL_FACTOR = 0.05/3.5                      # empirical value dl = dl + v * factor
+#     MAX_DIST = 50.0                          # max allowed distance between previous waypoint and target
+
+#     ########### NOTES ############
+#     # 1st turn optimal value for dl_mod = 1.7, using speed factor 0.93
+#     # 2nd turn optimal value for dl_mod = ...
+#     ########### NOTES ############
+
+#     U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+#     U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+
+# if ODOM_TOPIC == '/ego_racecar/odom':
+#     # System config
+#     NX = 4          # state vector: z = [x, y, v, yaw]
+#     NU = 2          # input vector: u = [accel, steer]
+#     T = 10           # finite time horizon length
+#     N_BATCH = 1
+#     LQR_ITER = 5
+#     VERBOSE_MPC = False
+
+#     # define P during runtime
+#     GOAL_WEIGHTS = torch.tensor((13.5, 13.5, 5.5, 13.0), dtype=torch.float32)  # nx
+#     CTRL_PENALTY = torch.tensor((0.01, 100), dtype=torch.float32) # nu
+#     q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
+#     Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
+
+#     # MPC prediction paramter
+#     N_IND_SEARCH = 5                        # Search index number
+#     DT = 0.10                               # time step [s]
+#     dl = 0.2                               # dist step [m]
+#     DL_FACTOR = 0.1/2.5
+#     VARYING_DL = True
+#     MAX_DIST = 1000.0                          # max allowed distance between previous waypoint and target
+
+#     # Vehicle parameters
+#     WB = 0.3302                           # Wheelbase [m]
+#     MAX_STEER = np.deg2rad(24.0)        # maximum steering angle [rad]
+#     MAX_SPEED = 3.5                    # maximum speed [m/s]
+#     MIN_SPEED = 0                       # minimum backward speed [m/s]
+#     MAX_ACCEL = 3                     # maximum acceleration [m/ss]
+#     SPEED_FACTOR = 1                    # Speed factor for the MPC controller
+
+#     U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+#     U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+################################################## Controller Paramter ##################################################
+
+################################################## Controller Paramter BEFORE ##################################################
+# # System config
+# NX = 4          # state vector: z = [x, y, v, yaw]
+# NU = 2          # input vector: u = [accel, steer]
+# T = 10           # finite time horizon length
+# N_BATCH = 1
+# LQR_ITER = 5
+
+# # define P during runtime
+# GOAL_WEIGHTS = torch.tensor((13.5, 13.5, 5.5, 13.0), dtype=torch.float32)  # nx
+# CTRL_PENALTY = torch.tensor((0.01, 100), dtype=torch.float32) # nu
+# q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
+# Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
+
+# # MPC prediction paramter
+# N_IND_SEARCH = 5                        # Search index number
+# DT = 0.10                               # time step [s]
+# dl = 0.20                               # dist step [m]
+
+# # Vehicle parameters
+# WB = 0.3302                           # Wheelbase [m]
+# MAX_STEER = np.deg2rad(24.0)        # maximum steering angle [rad]
+# MAX_SPEED = 2.9                    # maximum speed [m/s]
+# MIN_SPEED = 0                       # minimum backward speed [m/s]
+# MAX_ACCEL = 2.5                     # maximum acceleration [m/s]
+# SPEED_FACTOR = 0.93                  # published speed = SPEED_FACTOR * speed
+
+# U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+# U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+################################################## Controller Paramter BEFORE ##################################################
