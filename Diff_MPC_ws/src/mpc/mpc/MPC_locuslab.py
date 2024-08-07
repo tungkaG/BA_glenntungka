@@ -28,136 +28,60 @@ import sys, os
 sys.path.append(os.path.join(os.getcwd() + '/src/mpc/mpc'))
 from mpc_local import mpc
 
+###################################### YAML ######################################
+config_file = os.path.join(os.getcwd() + '/src/mpc/config', 'MPC_locuslab.yaml')
+with open(config_file) as file:
+    global_param_config = yaml.load(file, Loader=yaml.FullLoader)
+###################################### YAML ######################################
+
 ########################### ENV CONFIG ###################################
-map_yaml_filename = 'config_FTM_Halle.yaml'
+# map_yaml_filename = 'config_FTM_Halle.yaml'
+# # Construct the absolute path to the YAML file
+# map_file = os.path.join(os.getcwd() + '/src/mpc/maps', map_yaml_filename)
+# # ODOM_TOPIC = '/pf/pose/odom'
+# ODOM_TOPIC = '/ego_racecar/odom'
+
+map_yaml_filename = global_param_config['map_yaml_filename']
 # Construct the absolute path to the YAML file
 map_file = os.path.join(os.getcwd() + '/src/mpc/maps', map_yaml_filename)
-# ODOM_TOPIC = '/pf/pose/odom'
-ODOM_TOPIC = '/ego_racecar/odom'
-########################### MAP CONFIG ###################################
+ODOM_TOPIC = global_param_config['odom_topic']
+########################### ENV CONFIG ###################################
 
-##########################################################################
-# ToDo edit setup.cfg not to use python env
-########################################################################## 
+################################################## Controller Parameter ##################################################
+NX = 4          # state vector: z = [x, y, v, yaw]
+NU = 2          # input vector: u = [accel, steer]
+T = global_param_config['t']           # finite time horizon length
+N_BATCH = global_param_config['n_batch']
+LQR_ITER = global_param_config['lqr_iter']
+VERBOSE_MPC = global_param_config['verbose_mpc']
 
-#--------------------------- Controller Paramter ---------------------------
-if ODOM_TOPIC == '/pf/pose/odom':
-    # System config
-    NX = 4          # state vector: z = [x, y, v, yaw]
-    NU = 2          # input vector: u = [accel, steer]
-    T = 10           # finite time horizon length
-    N_BATCH = 1
-    LQR_ITER = 5
-    VERBOSE_MPC = False
+# define P during runtime
+GOAL_WEIGHTS = torch.tensor((global_param_config['goal_weight_x'], global_param_config['goal_weight_y'], 
+                             global_param_config['goal_weight_v'], global_param_config['goal_weight_theta']), 
+                             dtype=torch.float32)  # nx
+CTRL_PENALTY = torch.tensor((global_param_config['ctrl_penalty_a'], global_param_config['ctrl_penalty_steer']), dtype=torch.float32) # nu
+q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
+Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
 
-    # define P during runtime
-    GOAL_WEIGHTS = torch.tensor((26.5, 26.5, 5.5, 26.0), dtype=torch.float32)  # nx
-    CTRL_PENALTY = torch.tensor((0.01, 100), dtype=torch.float32) # nu
-    q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
-    Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
+N_IND_SEARCH = global_param_config['n_ind_search']                                      # Search index number
+DT = global_param_config['dt']                                                          # time step [s]
+dl = global_param_config['dl']                                                          # dist step [m]
+VARYING_DL = global_param_config['varying_dl']                                          # varying distance step size
+DL_FACTOR = global_param_config['dl_factor_num']/global_param_config['dl_factor_denom'] # empirical value dl = dl + v * factor
+MAX_DIST = global_param_config['max_dist']                                              # max allowed distance between previous waypoint and target
+CONTROL_FREQUENCY = global_param_config['control_frequency']                            # for every x odom messages, the controller is called
 
+# Vehicle parameters
+WB = global_param_config['wheelbase']                           # Wheelbase [m]
+MAX_STEER = np.deg2rad(global_param_config['max_steer'])        # maximum steering angle [rad]
+MAX_SPEED = global_param_config['max_speed']                    # maximum speed [m/s]
+MIN_SPEED = global_param_config['min_speed']                    # minimum backward speed [m/s]
+MAX_ACCEL = global_param_config['max_accel']                    # maximum acceleration [m/s]
+SPEED_FACTOR = global_param_config['speed_factor']              # published speed = SPEED_FACTOR * speed
 
-    # Vehicle parameters
-    WB = 0.3302                           # Wheelbase [m]
-    MAX_STEER = np.deg2rad(24.0)        # maximum steering angle [rad]
-    MAX_SPEED = 2.9                    # maximum speed [m/s]
-    MIN_SPEED = 0                       # minimum backward speed [m/s]
-    MAX_ACCEL = 2.5                     # maximum acceleration [m/s]
-    SPEED_FACTOR = 1                 # published speed = SPEED_FACTOR * speed
+U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
+U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
 
-    # MPC prediction paramter
-    N_IND_SEARCH = 5                        # Search index number
-    DT = 0.10                               # time step [s]
-    dl = 0.25                               # dist step [m]
-    VARYING_DL = False                       # varying distance step size
-    DL_FACTOR = 0.05/3.5                      # empirical value dl = dl + v * factor
-    MAX_DIST = 50.0                          # max allowed distance between previous waypoint and target
-
-    ########### NOTES ############
-    # 1st turn optimal value for dl_mod = 1.7, using speed factor 0.93
-    # 2nd turn optimal value for dl_mod = ...
-
-    U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
-    U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
-
-if ODOM_TOPIC == '/ego_racecar/odom':
-    #--------------------------- Controller Paramter ---------------------------
-    # System config
-    NX = 4          # state vector: z = [x, y, v, yaw]
-    NU = 2          # input vector: u = [accel, steer]
-    T = 10           # finite time horizon length
-    N_BATCH = 1
-    LQR_ITER = 5
-    VERBOSE_MPC = False
-
-    # define P during runtime
-    GOAL_WEIGHTS = torch.tensor((13.5, 13.5, 5.5, 13.0), dtype=torch.float32)  # nx
-    CTRL_PENALTY = torch.tensor((0.01, 100), dtype=torch.float32) # nu
-    q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
-    Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
-
-    # MPC prediction paramter
-    N_IND_SEARCH = 5                        # Search index number
-    DT = 0.10                               # time step [s]
-    dl = 0.2                               # dist step [m]
-    DL_FACTOR = 0.1/2.5
-    VARYING_DL = True
-    MAX_DIST = 1000.0                          # max allowed distance between previous waypoint and target
-
-    # Vehicle parameters
-    WB = 0.3302                           # Wheelbase [m]
-    MAX_STEER = np.deg2rad(24.0)        # maximum steering angle [rad]
-    MAX_SPEED = 3.5                    # maximum speed [m/s]
-    MIN_SPEED = 0                       # minimum backward speed [m/s]
-    MAX_ACCEL = 3                     # maximum acceleration [m/ss]
-    SPEED_FACTOR = 1                    # Speed factor for the MPC controller
-
-    U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
-    U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
-# #--------------------------- Controller Paramter BEFORE ---------------------------
-# # System config
-# NX = 4          # state vector: z = [x, y, v, yaw]
-# NU = 2          # input vector: u = [accel, steer]
-# T = 10           # finite time horizon length
-# N_BATCH = 1
-# LQR_ITER = 5
-
-# # define P during runtime
-# GOAL_WEIGHTS = torch.tensor((13.5, 13.5, 5.5, 13.0), dtype=torch.float32)  # nx
-# CTRL_PENALTY = torch.tensor((0.01, 100), dtype=torch.float32) # nu
-# q = torch.cat((GOAL_WEIGHTS, CTRL_PENALTY))  # nx + nu
-# Q = torch.diag(q).repeat(T, N_BATCH, 1, 1)  # T x B x nx+nu x nx+nu
-
-# # MPC prediction paramter
-# N_IND_SEARCH = 5                        # Search index number
-# DT = 0.10                               # time step [s]
-# dl = 0.20                               # dist step [m]
-
-# # Vehicle parameters
-# WB = 0.3302                           # Wheelbase [m]
-# MAX_STEER = np.deg2rad(24.0)        # maximum steering angle [rad]
-# MAX_SPEED = 2.9                    # maximum speed [m/s]
-# MIN_SPEED = 0                       # minimum backward speed [m/s]
-# MAX_ACCEL = 2.5                     # maximum acceleration [m/s]
-# SPEED_FACTOR = 0.93                  # published speed = SPEED_FACTOR * speed
-
-# U_LOWER = torch.tensor([[-np.inf, -MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
-# U_UPPER = torch.tensor([[MAX_ACCEL, MAX_STEER]], dtype=torch.float32).repeat(T, N_BATCH, 1)  # T x B x nu
-
-###################################################### DEBUG ########################################################
-# Create a ROS node for publishing debug messages
-class DebugPublisher(Node):
-    def __init__(self):
-        super().__init__('debug_publisher')
-        self.publisher_ = self.create_publisher(String, '/debug', 11)
-
-    def publish(self,str):
-        msg = String()
-        msg.data = str
-        self.publisher_.publish(msg)
-
-DEBUG_PUBLISHER = None # initialized in main
-####################################################################################################################
 class CarDynamics(torch.nn.Module):
         def forward(self, state, action):
             x = state[:, 0].view(-1, 1)
@@ -276,7 +200,33 @@ class State:
         self.yaw = yaw
         self.v = v
 
-class Controller:
+class MPC_Pos_Node(Node):
+    def __init__(self):
+        super().__init__('mpc_pos_node')
+        self.mpc_position_pub = self.create_publisher(MarkerArray, '/mpc_pos', 1)
+
+    def publish_mpc_pos(self, ox, oy):
+        mpc_pos = MarkerArray()
+        for i in range(len(ox)):
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = self.get_clock().now().to_msg()
+            marker.ns = "mpc_pos"
+            marker.id = i
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            marker.pose.position = Point(x = ox[i], y = oy[i], z = 0.0)
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+            marker.color.a = 1.0
+            marker.color.r = 1.0
+            marker.color.g = 0.0
+            marker.color.b = 0.0
+            mpc_pos.markers.append(marker)
+        self.mpc_position_pub.publish(mpc_pos)
+
+class Controller():
 
     def __init__(self, conf, wb):
         self.wheelbase = wb
@@ -289,6 +239,9 @@ class Controller:
         self.origin_switch = 1
         self.u_init = None
 
+        ################################## DEBUG ##################################
+        self.mpc_position_node = MPC_Pos_Node()
+        ################################## DEBUG ##################################
     def load_waypoints(self, conf):
         # Loading the x and y waypoints in the "..._raceline.vsv" that include the path to follow
         self.waypoints = np.loadtxt(conf.wpt_path, delimiter=conf.wpt_delim, skiprows=conf.wpt_rowskip)
@@ -481,49 +434,16 @@ class Controller:
         # Solve the Linear MPC Control problem
         self.oa, self.odelta, ox, oy, oyaw, ov = self.mpc_control(ref_path, x0)
 
+        ################################## DEBUG ##################################
+        # Convert ox and oy to floats
+        ox = ox.astype(float)
+        oy = oy.astype(float)
+        # Publish the MPC position for visualization
+        self.mpc_position_node.publish_mpc_pos(ox, oy)
+        ################################## DEBUG ##################################
+
         if self.odelta is not None:
             di, ai = self.odelta[0], self.oa[0]
-
-        ###########################################
-        #                    DEBUG
-        ##########################################
-
-        # debugplot = 0
-        # if debugplot == 1:
-        #     plt.cla()
-        #     # plt.axis([-40, 2, -10, 10])
-        #     plt.axis([vehicle_state.x - 6, vehicle_state.x + 4.5, vehicle_state.y - 2.5, vehicle_state.y  + 2.5])
-        #     plt.plot(self.waypoints[:, [1]], self.waypoints[:, [2]], linestyle='solid', linewidth=2, color='#005293', label='Raceline')
-        #     plt.plot(vehicle_state.x, vehicle_state.y, marker='o', markersize=10, color='red', label='CoG')
-        #     plt.plot(ref_path[0], ref_path[1], linestyle='dotted', linewidth=8, color='purple',label='MPC Input: Ref. Trajectory for T steps')
-        #     #plt.plot(cx[self.target_ind], cy[self.target_ind], marker='x', markersize=10, color='green',)
-        #     plt.plot(ox, oy, linestyle='dotted', linewidth=5, color='green',label='MPC Output: Trajectory for T steps')
-        #     plt.legend()
-        #     plt.pause(0.001)
-        #     plt.axis('equal')
-
-        # debugplot2 = 0
-        # if debugplot2 == 1:
-        #     plt.cla()
-        #     # Creating the number of subplots
-        #     fig, axs = plt.subplots(3, 1)
-        #     #  Velocity of the vehicle
-        #     axs[0].plot(ov, linestyle='solid', linewidth=2, color='#005293')
-        #     axs[0].set_ylim([0, max(ov) + 0.5])
-        #     axs[0].set(ylabel='Velocity in m/s')
-        #     axs[0].grid(axis="both")
-
-        #     axs[1].plot(self.oa, linestyle='solid', linewidth=2, color='#005293')
-        #     axs[1].set_ylim([0, max(self.oa) + 0.5])
-        #     axs[1].set(ylabel='Acceleration in m/s')
-        #     axs[1].grid(axis="both")
-        #     plt.pause(0.001)
-        #     plt.axis('equal')
-
-        ###########################################
-        #                    DEBUG
-        ##########################################
-
 
         #------------------- MPC CONTROL Output ---------------------------------
         # Steering Output: First entry of the MPC steering angle output vector in degree
@@ -648,7 +568,8 @@ class MPC_Node(Node):
             # Publishers
             self.drive_pub = self.create_publisher(AckermannDriveStamped, '/drive', 1)
             self.ref_path_pub = self.create_publisher(MarkerArray, '/ref_path', 1)
-        
+            # self.position_pub = self.create_publisher(Pose, '/current_pose', 1)
+
         def odom_callback(self, msg):
             # Convert the Quaternion message to a list
             quaternion = [
@@ -671,11 +592,14 @@ class MPC_Node(Node):
 
             if self.obs_linear_vel_x > self.obs_max_speed:
                 self.obs_max_speed = self.obs_linear_vel_x
-
-            if(self.control_count == 10):
+            
+            # print("self.control_count: ", self.control_count)
+            # print("CONTROL_FREQUENCY: ", CONTROL_FREQUENCY)
+            if(self.control_count >= CONTROL_FREQUENCY):
                 self.control_count = 0
                 self.publish_control()
                 self.publish_ref_path()
+                # self.publish_pose()
 
             self.control_count = self.control_count + 1 
 
@@ -712,12 +636,6 @@ class MPC_Node(Node):
                 marker.type = Marker.SPHERE
                 marker.action = Marker.ADD
                 marker.pose.position = Point(x = self.ref_path[0, i], y = self.ref_path[1, i], z = 0.0)
-                # marker.pose.position.x = self.ref_path[0, i]
-                # marker.pose.position.y = self.ref_path[1, i]
-                # marker.pose.position.z = 0.0
-                # marker.pose.orientation.x = 0.0
-                # marker.pose.orientation.y = 0.0
-                # marker.pose.orientation.z = 0.0
                 marker.pose.orientation.w = 1.0
                 marker.scale.x = 0.1
                 marker.scale.y = 0.1
@@ -730,7 +648,19 @@ class MPC_Node(Node):
 
             self.ref_path_pub.publish(ref_path_msg)
 
-        
+        # def publish_pose(self):
+        #     # Publish the pose of the vehicle for visualization
+        #     pose_msg = Pose()
+        #     pose_msg.position.x = self.obs_pose_x
+        #     pose_msg.position.y = self.obs_pose_y
+        #     pose_msg.position.z = 0.0
+        #     pose_msg.orientation.x = 0.0
+        #     pose_msg.orientation.y = 0.0
+        #     pose_msg.orientation.z = self.obs_pose_theta
+        #     pose_msg.orientation.w = 1.0
+
+        #     self.position_pub.publish(pose_msg)
+
         def cleanup(self):
             print("Max speed: ", self.obs_max_speed)
             print("Max steering: ", self.max_steering*180/math.pi)
