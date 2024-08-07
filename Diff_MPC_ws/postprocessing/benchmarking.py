@@ -13,7 +13,7 @@ import math
 results_path = '/home/glenn/BA/Diff_MPC_ws/postprocessing/results/diff_mpc_sim_result.csv' # Path to where the metrics per lap should be saved as csv
 data_path = '/home/glenn/BA/Diff_MPC_ws/postprocessing/data/diff_mpc_sim.csv' # Path to the pandas dataframe saved as csv with .csv ending
 raceline_path = '/home/glenn/BA/Diff_MPC_ws/maps/FTM_Halle.csv' # Path to the raceline with .csv ending
-map_path = '/home/glenn/BA/Diff_MPC_ws/maps/FTM_Halle' #without ending
+map_path = '/home/glenn/BA/Diff_MPC_ws/maps/FTM_Halle_cleaned_high_res' #without ending
 
 # Define laps you want to plot
 selected_laps = [1, 3, 5]
