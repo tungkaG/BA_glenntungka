@@ -409,6 +409,9 @@ class Controller():
         steer_output = self.odelta[0]
         speed_output= vehicle_state.v + self.oa[0] * DT
 
+        steer_output = np.clip(steer_output, -MAX_STEER, MAX_STEER)
+        speed_output = np.clip(speed_output, MIN_SPEED, MAX_SPEED)
+
         return speed_output, steer_output, ref_path
 
 class LatticePlanner:
@@ -512,10 +515,7 @@ class MPC_Node(Node):
             self.speed, self.steer, self.ref_path = self.controller.control(self.obs_pose_x, self.obs_pose_y, 
                                                                             self.obs_pose_theta, self.obs_linear_vel_x, 
                                                                             self.path)
-
-            if self.steer > self.max_steering:
-                self.max_steering = self.steer
-
+            
             # Prepare the drive message with the steering angle and corresponding speed
             drive_msg = AckermannDriveStamped()
             drive_msg.header.stamp = self.get_clock().now().to_msg()
