@@ -444,7 +444,7 @@ class MPC_Node(Node):
 
             map_yaml_filename = CONFIG_PARAM['map_yaml_filename']
             # Construct the absolute path to the YAML file
-            map_file = os.path.join(os.getcwd() + '/src/mpc/maps', map_yaml_filename)
+            map_file = os.path.join(os.getcwd() + '/maps', map_yaml_filename)
             # Load the configuration map file
             with open(map_file) as file:
                 self.conf_dict = yaml.load(file, Loader=yaml.FullLoader)
