@@ -3,9 +3,9 @@
 # odom_topic: '/pf/pose/odom'                           # Topic where the odometry is published
 
 # # MPC prediction paramter
-# t: 10                                                 # Prediction horizon                          
+# t: 6                                                  # Prediction horizon                          
 # n_batch: 1                                            # Batch size for solving the optimization problem          
-# lqr_iter: 8                                           # Number of maximum LQR iterations to solve the differentiable MPC problem
+# lqr_iter: 5                                           # Number of maximum LQR iterations to solve the differentiable MPC problem
 # verbose_mpc: false                                    # Verbosity of the MPC solver       
 # goal_weight_x: 13.5                                   # Weight for the x deviation in the cost function
 # goal_weight_y: 13.5                                   # Weight for the y deviation in the cost function
@@ -16,16 +16,16 @@
 
 # n_ind_search: 5                                       # Number of search index used to calculate the nearest waypoint in planned trajectorie
 # dt: 0.10                                              # Disrete Time step
-# dl: 0.2                                               # Discrete distance step used to calculate reference path
-# varying_dl: false                                     # Varying distance step size
-# dl_factor_num: 0.05                                   # Empirical value dl = dl + v * dl_factor_num/dl_factor_denom
-# dl_factor_denom: 3.5                                  # Empirical value dl = dl + v * dl_factor_num/dl_factor_denom
+# dl: 0.18                                               # Discrete distance step used to calculate reference path
+# varying_dl: true                                     # Varying distance step size
+# dl_factor_num: 0.03                                   # Empirical value dl = dl + v * dl_factor_num/dl_factor_denom
+# dl_factor_denom: 2.5                                  # Empirical value dl = dl + v * dl_factor_num/dl_factor_denom
 # control_frequency: 10                                 # Control frequency: for every x odom messages, the controller is called
 
 # # Vehicle parameters
 # wheelbase: 0.3302                                     # Wheelbase of the vehicle in m
 # max_steer: 24.0                                       # Maximum steering angle in degrees
-# max_speed: 2.9                                        # Maximum speed of the vehicle in m/s
+# max_speed: 3                                       # Maximum speed of the vehicle in m/s
 # min_speed: 0                                          # Minimum speed of the vehicle in m/s
 # max_accel: 2.5                                        # Maximum acceleration of the vehicle in m/s^2
 # speed_factor: 1                                       # Speed factor for the MPC controller: published speed = SPEED_FACTOR * speed
@@ -37,34 +37,34 @@ map_yaml_filename: 'config_FTM_Halle.yaml'
 odom_topic: '/ego_racecar/odom'
 
 # MPC prediction paramter
-t: 10
+t: 6
 n_batch: 1
 lqr_iter: 5
 verbose_mpc: false
-goal_weight_x: 13.5
-goal_weight_y: 13.5
+goal_weight_x: 20.5
+goal_weight_y: 20.5
 goal_weight_v: 5.5
-goal_weight_theta: 20.0
+goal_weight_theta: 13.0
 ctrl_penalty_a: 0.01
 ctrl_penalty_steer: 100
 
 n_ind_search: 5
 dt: 0.10
-dl: 0.2
+dl: 0.1
 varying_dl: true
-dl_factor_num: 0.08
+dl_factor_num: 0.15
 dl_factor_denom: 2.5
-control_frequency: 10
+control_frequency: 7
 
 # Vehicle parameters
 wheelbase: 0.3302
 max_steer: 24.0 # degrees
 max_speed: 3.5
 min_speed: 0
-max_accel: 3.0
+max_accel: 3
 speed_factor: 1
 
-#############################################################################################################
+############################################################################################################
 
 # if ODOM_TOPIC == '/pf/pose/odom':
 #     # System config
