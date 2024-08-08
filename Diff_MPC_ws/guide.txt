@@ -25,4 +25,4 @@ cd build
 cmake ..
 make
 cd ~/range_libc/pywrapper
-sudo -E WITH_CUDA=ON /path/to/miniconda3/envs/myenv/bin/python setup.py install
+sudo -E WITH_CUDA=OFF /path/to/miniconda3/envs/myenv/bin/python setup.py install
