@@ -1,0 +1,8 @@
+map_yaml_filename : 'config_FTM_Halle.yaml'
+odom_topic: '/ego_racecar/odom'
+
+dt: 0.1
+wheelbase: 0.3302
+k_stanley: 0.9
+k_pid: 0.9
+control_frequency: 10
