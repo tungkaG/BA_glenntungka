@@ -23,8 +23,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'MPC_Felix = mpc.MPC_Felix:main',
-            'Stanley = mpc.Stanley:main',
             'MPC_locuslab = mpc.MPC_locuslab:main',
         ],
     },
